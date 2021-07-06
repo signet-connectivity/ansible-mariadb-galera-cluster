@@ -9,6 +9,8 @@
     login_unix_socket: "{{ mariadb_login_unix_socket }}"
   with_items: "{{ mariadb_databases }}"
   become: true
+  delegate_to: "{{ galera_mysql_first_node }}"
+  run_once: true
   register: _db
 
 - name: mysql_databases | copy database init scripts
@@ -16,6 +18,8 @@
     src: "{{ item.item.init_script }}"
     dest: "/tmp/{{ item.item.init_script | basename }}"
     mode: "0600"
+  delegate_to: "{{ galera_mysql_first_node }}"
+  run_once: true
   with_items: "{{ _db.results }}"
   when:
     - item.changed
@@ -29,6 +33,8 @@
     login_unix_socket: "{{ mariadb_login_unix_socket }}"
   with_items: "{{ _db.results }}"
   become: true
+  delegate_to: "{{ galera_mysql_first_node }}"
+  run_once: true
   when:
     - item.changed
     - item.item.init_script is defined
@@ -37,6 +43,8 @@
   file: # noqa 503
     name: "/tmp/{{ item.item.init_script | basename }}"
     state: absent
+  delegate_to: "{{ galera_mysql_first_node }}"
+  run_once: true
   with_items: "{{ _db.results }}"
   when:
     - item.changed
